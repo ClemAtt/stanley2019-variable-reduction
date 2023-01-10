@@ -1,6 +1,5 @@
 
-subroutine makeGrid_fortran(nRows, nGrid, dx, dy, shear, rotate, turbs_per_row, x_start, &
-                    & y0, turbineX, turbineY)
+subroutine makeGrid_fortran(nRows, nGrid, dx, dy, shear, rotate, turbs_per_row, x_start, y0, turbineX, turbineY)
 
     implicit none
 
@@ -317,15 +316,11 @@ SUBROUTINE MAKEBOUNDARY_DV(nbounds, nouter, boundx, boundy, start, &
       IF (done .EQ. 0) THEN
         IF (bound_loc .LT. SUM(lenbound(:j))) THEN
           DO nd=1,nbdirs
-            turbinexd(nd, i) = (boundx(j+1)-boundx(j))*bound_locd(nd)/&
-&             lenbound(j)
-            turbineyd(nd, i) = (boundy(j+1)-boundy(j))*bound_locd(nd)/&
-&             lenbound(j)
+            turbinexd(nd, i) = (boundx(j+1)-boundx(j))*bound_locd(nd)/lenbound(j)
+            turbineyd(nd, i) = (boundy(j+1)-boundy(j))*bound_locd(nd)/lenbound(j)
           END DO
-          turbinex(i) = boundx(j) + (boundx(j+1)-boundx(j))*(bound_loc-&
-&           SUM(lenbound(:j-1)))/lenbound(j)
-          turbiney(i) = boundy(j) + (boundy(j+1)-boundy(j))*(bound_loc-&
-&           SUM(lenbound(:j-1)))/lenbound(j)
+          turbinex(i) = boundx(j) + (boundx(j+1)-boundx(j))*(bound_loc-SUM(lenbound(:j-1)))/lenbound(j)
+          turbiney(i) = boundy(j) + (boundy(j+1)-boundy(j))*(bound_loc-SUM(lenbound(:j-1)))/lenbound(j)
           done = 1
           bound_loc = bound_loc + spacing
         END IF
@@ -344,35 +339,30 @@ SUBROUTINE TURBINELOCATIONS_DV(nbounds, nrows, nturbines, nouter, ngrid&
 & x_start, y0, start, startd, boundx, boundy, turbinex, turbinexd, &
 & turbiney, turbineyd, nbdirs)
 
-!  Hint: nbdirs should be the maximum number of differentiation directions
+  !  Hint: nbdirs should be the maximum number of differentiation directions
   IMPLICIT NONE
   INTRINSIC KIND
-! define precision to be the standard for a double precision ! on local system
+  ! define precision to be the standard for a double precision ! on local system
   INTEGER, PARAMETER :: dp=KIND(0.d0)
-! in
+  ! in
   INTEGER, INTENT(IN) :: nbounds, nrows, nturbines, nouter, ngrid
   REAL(dp), DIMENSION(nbounds), INTENT(IN) :: boundx, boundy
   INTEGER, DIMENSION(nrows), INTENT(IN) :: turbs_per_row
   REAL(dp), DIMENSION(nrows), INTENT(IN) :: x_start
   REAL(dp), INTENT(IN) :: dx, dy, shear, rotate, y0, start
-  REAL(dp), DIMENSION(nbdirs), INTENT(IN) :: dxd, dyd, sheard, &
-& rotated, startd
-! out
+  REAL(dp), DIMENSION(nbdirs), INTENT(IN) :: dxd, dyd, sheard, rotated, startd
+  ! out
   REAL(dp), DIMENSION(nturbines), INTENT(OUT) :: turbinex, turbiney
-  REAL(dp), DIMENSION(nbdirs, nturbines), INTENT(OUT) :: turbinexd, &
-& turbineyd
-! local
+  REAL(dp), DIMENSION(nbdirs, nturbines), INTENT(OUT) :: turbinexd, turbineyd
+  ! local
   REAL(dp), DIMENSION(nouter) :: outerx, outery
   REAL(dp), DIMENSION(nbdirs, nouter) :: outerxd, outeryd
   REAL(dp), DIMENSION(ngrid) :: innerx, innery
   REAL(dp), DIMENSION(nbdirs, ngrid) :: innerxd, inneryd
   INTEGER :: nd
   INTEGER :: nbdirs
-  CALL MAKEBOUNDARY_DV(nbounds, nouter, boundx, boundy, start, startd, &
-&                outerx, outerxd, outery, outeryd, nbdirs)
-  CALL MAKEGRID_FORTRAN_DV(nrows, ngrid, dx, dxd, dy, dyd, shear, sheard&
-&                    , rotate, rotated, turbs_per_row, x_start, y0, &
-&                    innerx, innerxd, innery, inneryd, nbdirs)
+  CALL MAKEBOUNDARY_DV(nbounds, nouter, boundx, boundy, start, startd, outerx, outerxd, outery, outeryd, nbdirs)
+  CALL MAKEGRID_FORTRAN_DV(nrows, ngrid, dx, dxd, dy, dyd, shear, sheard, rotate, rotated, turbs_per_row, x_start, y0, innerx, innerxd, innery, inneryd, nbdirs)
   turbinexd(:, :) = 0.0_8
   turbineyd(:, :) = 0.0_8
   DO nd=1,nbdirs
