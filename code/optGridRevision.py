@@ -56,48 +56,48 @@ class AEP_obj_ncalls(Component):
         self.nTurbines = nTurbines
 
         # Explicitly size input arrays
-        self.add_param('turbineX', val=np.zeros(nTurbines))
-        self.add_param('turbineY', val=np.zeros(nTurbines))
-        self.add_param('turbineZ', val=np.ones(nTurbines)*110.)
-        self.add_param('rotorDiameter', val=np.ones(nTurbines)*130.)
-        self.add_param('Ct', val=np.ones(nTurbines)*8./9.)
-        self.add_param('yaw', val=np.zeros(nTurbines))
+        self.add_input('turbineX', val=np.zeros(nTurbines))
+        self.add_input('turbineY', val=np.zeros(nTurbines))
+        self.add_input('turbineZ', val=np.ones(nTurbines)*110.)
+        self.add_input('rotorDiameter', val=np.ones(nTurbines)*130.)
+        self.add_input('Ct', val=np.ones(nTurbines)*8./9.)
+        self.add_input('yaw', val=np.zeros(nTurbines))
 
-        self.add_param('windDirections', val=np.zeros(nDirections))
-        self.add_param('windSpeeds', val=np.zeros(nDirections))
-        self.add_param('windFrequencies', val=np.zeros(nDirections))
+        self.add_input('windDirections', val=np.zeros(nDirections))
+        self.add_input('windSpeeds', val=np.zeros(nDirections))
+        self.add_input('windFrequencies', val=np.zeros(nDirections))
 
-        self.add_param('RotorPointsY', val=np.zeros(nRotorPoints))
-        self.add_param('RotorPointsZ', val=np.zeros(nRotorPoints))
+        self.add_input('RotorPointsY', val=np.zeros(nRotorPoints))
+        self.add_input('RotorPointsZ', val=np.zeros(nRotorPoints))
 
-        self.add_param('ct_curve_wind_speed', val=np.zeros(nCtPoints))
-        self.add_param('ct_curve_ct', val=np.zeros(nCtPoints))
+        self.add_input('ct_curve_wind_speed', val=np.zeros(nCtPoints))
+        self.add_input('ct_curve_ct', val=np.zeros(nCtPoints))
 
-        self.add_param('shear_exp', val=0.1)
-        self.add_param('rated_ws', val=9.8)
-        self.add_param('rated_power', val=3.6)
-        self.add_param('cut_in_speed', val=4.0)
-        self.add_param('cut_out_speed', val=25.0)
-        self.add_param('zref', val=50.0)
-        self.add_param('z0', val=0.0)
-        self.add_param('ky', val=0.022)
-        self.add_param('kz', val=0.022)
-        self.add_param('alpha', val=2.32)
-        self.add_param('beta', val=0.154)
-        self.add_param('TI', val=0.11)
-        self.add_param('relaxationFactor', val=1.0)
-        self.add_param('sm_smoothing', val=700.)
-        self.add_param('generator_efficiency', val=0.936)
+        self.add_input('shear_exp', val=0.1)
+        self.add_input('rated_ws', val=9.8)
+        self.add_input('rated_power', val=3.6)
+        self.add_input('cut_in_speed', val=4.0)
+        self.add_input('cut_out_speed', val=25.0)
+        self.add_input('zref', val=50.0)
+        self.add_input('z0', val=0.0)
+        self.add_input('ky', val=0.022)
+        self.add_input('kz', val=0.022)
+        self.add_input('alpha', val=2.32)
+        self.add_input('beta', val=0.154)
+        self.add_input('TI', val=0.11)
+        self.add_input('relaxationFactor', val=1.0)
+        self.add_input('sm_smoothing', val=700.)
+        self.add_input('generator_efficiency', val=0.936)
 
-        self.add_param('wake_combination_method', val=1)
-        self.add_param('ti_calculation_method', val=2)
-        self.add_param('wake_model_version', val=2016)
-        self.add_param('interp_type', val=1)
-        self.add_param('calc_k_star', val=True)
-        self.add_param('print_ti', val=False)
-        self.add_param('use_ct_curve', val=True)
+        self.add_input('wake_combination_method', val=1)
+        self.add_input('ti_calculation_method', val=2)
+        self.add_input('wake_model_version', val=2016)
+        self.add_input('interp_type', val=1)
+        self.add_input('calc_k_star', val=True)
+        self.add_input('print_ti', val=False)
+        self.add_input('use_ct_curve', val=True)
 
-        self.add_output('negAEP', val=0.0, pass_by_object=True)
+        self.add_output('negAEP', val=0.0)
 
 
     def solve_nonlinear(self, params, unknowns, resids):
@@ -282,7 +282,7 @@ if __name__ == "__main__":
         locations[:, 1] = yBounds
         boundaryVertices, boundaryNormals = calculate_boundary(locations)
     elif boundary == 'amalia':
-        locations = np.loadtxt('/fslhome/pjstanle/compute/reduction/layout_amalia.txt')
+        locations = np.loadtxt('layout_amalia.txt')
 	xBounds = locations[:, 0]
         yBounds = locations[:, 1]
         xBounds = xBounds - min(xBounds) - (max(xBounds)-min(xBounds))/2.
@@ -395,15 +395,16 @@ if __name__ == "__main__":
         prob.driver.opt_settings['Summary file'] = '%s/%s_summary.out'%(folder,run)
         prob.driver.opt_settings['Print file'] = '%s/%s_print.out'%(folder,run)
 
-        prob.driver.add_objective('negAEP',scaler=1E-4)
+        model = prob.model
+        model.add_objective('negAEP',scaler=1E-4)
 
-        prob.driver.add_desvar('dx')
-        prob.driver.add_desvar('dy')
-        prob.driver.add_desvar('shear')
-        prob.driver.add_desvar('rotate')
+        model.add_design_var('dx')
+        model.add_design_var('dy')
+        model.add_design_var('shear')
+        model.add_design_var('rotate')
 
-        prob.driver.add_constraint('spacing_constraint',lower=0.)
-        prob.driver.add_constraint('boundary_constraint',lower=0.)
+        model.add_constraint('spacing_constraint',lower=0.)
+        model.add_constraint('boundary_constraint',lower=0.)
 
         prob.setup(check=True)
 

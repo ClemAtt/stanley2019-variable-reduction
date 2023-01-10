@@ -1,14 +1,14 @@
 from pyoptsparse import Optimization, SNOPT, pyOpt_solution, NSGA2
-from openmdao.api import Group, Component, Problem, IndepVarComp, pyOptSparseDriver
+from openmdao.core.component import Component
 import numpy as np
 import scipy as sp
 import os
 import sys
 sys.path.insert(0, '/Users/ningrsrch/Dropbox/Projects/reduction/exact-gradients')
 from aep_calc import *
-import param_fortran
+import full_param
 from var_reduction_exact import *
-import grid_param_fortran
+import grid_param
 import constraints
 import sys
 from windRoses import *
@@ -28,16 +28,16 @@ class AEP_calc(Component):
         self.nTurbines = nTurbines
 
         # Explicitly size input arrays
-        self.add_param('turbineX', val=np.zeros(nTurbines))
-        self.add_param('turbineY', val=np.zeros(nTurbines))
-        self.add_param('turbineZ', val=np.zeros(nTurbines))
-        self.add_param('rotorDiameter', val=np.zeros(nTurbines))
+        self.add_input('turbineX', val=np.zeros(nTurbines))
+        self.add_input('turbineY', val=np.zeros(nTurbines))
+        self.add_input('turbineZ', val=np.zeros(nTurbines))
+        self.add_input('rotorDiameter', val=np.zeros(nTurbines))
 
-        self.add_param('windDirections', val=np.zeros(nDirections))
-        self.add_param('windSpeeds', val=np.zeros(nDirections))
-        self.add_param('windFrequencies', val=np.zeros(nDirections))
+        self.add_input('windDirections', val=np.zeros(nDirections))
+        self.add_input('windSpeeds', val=np.zeros(nDirections))
+        self.add_input('windFrequencies', val=np.zeros(nDirections))
 
-        self.add_output('negAEP', val=0.0, pass_by_object=True)
+        self.add_output('negAEP', val=0.0)
 
 
     def solve_nonlinear(self, params, unknowns, resids):
@@ -87,15 +87,15 @@ class constraint_calc(Component):
 
         self.nTurbines = nTurbines
         # Explicitly size input arrays
-        self.add_param('turbineX', val=np.zeros(nTurbines))
-        self.add_param('turbineY', val=np.zeros(nTurbines))
-        self.add_param('rotorDiameter', val=np.zeros(nTurbines))
+        self.add_input('turbineX', val=np.zeros(nTurbines))
+        self.add_input('turbineY', val=np.zeros(nTurbines))
+        self.add_input('rotorDiameter', val=np.zeros(nTurbines))
 
-        self.add_param('boundaryVertices', val=np.zeros((nBoundaries,2)))
-        self.add_param('boundaryNormals', val=np.zeros((nBoundaries,2)))
+        self.add_input('boundaryVertices', val=np.zeros((nBoundaries,2)))
+        self.add_input('boundaryNormals', val=np.zeros((nBoundaries,2)))
 
-        self.add_output('spacing_constraint', val=np.zeros((nTurbines-1)*nTurbines/2), pass_by_object=True)
-        self.add_output('boundary_constraint', val=np.zeros(nTurbines), pass_by_object=True)
+        self.add_output('spacing_constraint', val=np.zeros((nTurbines-1)*nTurbines/2))
+        self.add_output('boundary_constraint', val=np.zeros(nTurbines))
 
 
     def solve_nonlinear(self, params, unknowns, resids):
@@ -170,21 +170,21 @@ class get_turbine_locs(Component):
         self.nBoundaries = nBoundaries
 
         # Explicitly size input arrays
-        self.add_param('dx', val=0.)
-        self.add_param('dy', val=0.)
-        self.add_param('shear', val=0.)
-        self.add_param('rotate', val=0.)
-        self.add_param('start', val=0.)
-        self.add_param('y0', val=0.)
+        self.add_input('dx', val=0.)
+        self.add_input('dy', val=0.)
+        self.add_input('shear', val=0.)
+        self.add_input('rotate', val=0.)
+        self.add_input('start', val=0.)
+        self.add_input('y0', val=0.)
 
-        self.add_param('turbs_per_row', val=np.zeros(nRows,dtype=int))
-        self.add_param('x_start', val=np.zeros(nRows))
+        self.add_input('turbs_per_row', val=np.zeros(nRows,dtype=int))
+        self.add_input('x_start', val=np.zeros(nRows))
 
-        self.add_param('bx', val=np.zeros(nBoundaries))
-        self.add_param('by', val=np.zeros(nBoundaries))
+        self.add_input('bx', val=np.zeros(nBoundaries))
+        self.add_input('by', val=np.zeros(nBoundaries))
 
-        self.add_output('turbineX', val=np.zeros(nTurbines), pass_by_object=True)
-        self.add_output('turbineY', val=np.zeros(nTurbines), pass_by_object=True)
+        self.add_output('turbineX', val=np.zeros(nTurbines))
+        self.add_output('turbineY', val=np.zeros(nTurbines))
 
 
     def solve_nonlinear(self, params, unknowns, resids):

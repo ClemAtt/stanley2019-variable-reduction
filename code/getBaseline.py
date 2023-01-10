@@ -1,9 +1,8 @@
 from pyoptsparse import Optimization, SNOPT, pyOpt_solution, NSGA2
-from openmdao.api import Group, Component, Problem, IndepVarComp, pyOptSparseDriver
 import numpy as np
 import scipy as sp
 import os
-import grid_param_fortran
+import grid_param
 import full_aep
 from var_reduction_exact import *
 import sys
@@ -125,8 +124,8 @@ if __name__ == "__main__":
         locations[:, 1] = yBounds
         boundaryVertices, boundaryNormals = calculate_boundary(locations)
     elif boundary == 'amalia':
-        locations = np.loadtxt('/fslhome/pjstanle/compute/reduction/layout_amalia.txt')
-	xBounds = locations[:, 0]
+        locations = np.loadtxt('layout_amalia.txt')
+        xBounds = locations[:, 0]
         yBounds = locations[:, 1]
         xBounds = xBounds - min(xBounds) - (max(xBounds)-min(xBounds))/2.
         yBounds = yBounds - min(yBounds) - (max(yBounds)-min(yBounds))/2.

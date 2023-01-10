@@ -1,19 +1,23 @@
 import numpy as np
 from scipy.spatial import ConvexHull
 import sys
+
 sys.dont_write_bytecode = True
+
 
 def turbineSpacingSquared(turbineX, turbineY):
     """
     Calculates inter-turbine spacing for all turbine pairs
     """
     nTurbines = len(turbineX)
-    separation_squared = np.zeros((nTurbines-1)*nTurbines/2)
+    separation_squared = np.zeros(int((nTurbines - 1) * nTurbines / 2))
 
     k = 0
     for i in range(0, nTurbines):
-        for j in range(i+1, nTurbines):
-            separation_squared[k] = (turbineX[j]-turbineX[i])**2+(turbineY[j]-turbineY[i])**2
+        for j in range(i + 1, nTurbines):
+            separation_squared[k] = (turbineX[j] - turbineX[i]) ** 2 + (
+                turbineY[j] - turbineY[i]
+            ) ** 2
             k += 1
     return separation_squared
 
@@ -24,25 +28,37 @@ def SpacingConstraint(turbineX, turbineY, rotorDiameter, minSpacing=2.0):
     """
     nTurbines = len(rotorDiameter)
     separation_squared = turbineSpacingSquared(turbineX, turbineY)
-    spacing_con = np.zeros(int((nTurbines-1.)*nTurbines/2.))
+    spacing_con = np.zeros(int((nTurbines - 1.0) * nTurbines / 2.0))
 
     k = 0
     for i in range(0, nTurbines):
-        for j in range(i+1, nTurbines):
-            spacing_con[k] = separation_squared[k] - (0.5*minSpacing*rotorDiameter[i]+0.5*minSpacing*rotorDiameter[j])**2
+        for j in range(i + 1, nTurbines):
+            spacing_con[k] = (
+                separation_squared[k]
+                - (
+                    0.5 * minSpacing * rotorDiameter[i]
+                    + 0.5 * minSpacing * rotorDiameter[j]
+                )
+                ** 2
+            )
             k += 1
     return spacing_con
 
 
-def circularBoundary(turbineX, turbineY, circle_radius, circle_center=np.array([0.,0.])):
+def circularBoundary(
+    turbineX, turbineY, circle_radius, circle_center=np.array([0.0, 0.0])
+):
     """
     circular boundary constraint
     """
     nTurbines = len(turbineX)
     circle_boundary_constraint = np.zeros(nTurbines)
     for i in range(nTurbines):
-        R = np.sqrt((turbineX[i]-circle_center[0])**2+(turbineY[i]-circle_center[1])**2)
-        circle_boundary_constraint[i] = circle_radius-R
+        R = np.sqrt(
+            (turbineX[i] - circle_center[0]) ** 2
+            + (turbineY[i] - circle_center[1]) ** 2
+        )
+        circle_boundary_constraint[i] = circle_radius - R
     return circle_boundary_constraint
 
 
@@ -84,16 +100,20 @@ def calculate_boundary(vertices):
 
         # calculate the unit normal vector of the current face (taking points CCW)
         if j < nVertices - 1:  # all but the set of point that close the shape
-            normal = np.array([vertices[j+1, 1]-vertices[j, 1],
-                               -(vertices[j+1, 0]-vertices[j, 0])])
-            unit_normals[j] = normal/np.linalg.norm(normal)
-        else:   # the set of points that close the shape
-            normal = np.array([vertices[0, 1]-vertices[j, 1],
-                               -(vertices[0, 0]-vertices[j, 0])])
-            unit_normals[j] = normal/np.linalg.norm(normal)
+            normal = np.array(
+                [
+                    vertices[j + 1, 1] - vertices[j, 1],
+                    -(vertices[j + 1, 0] - vertices[j, 0]),
+                ]
+            )
+            unit_normals[j] = normal / np.linalg.norm(normal)
+        else:  # the set of points that close the shape
+            normal = np.array(
+                [vertices[0, 1] - vertices[j, 1], -(vertices[0, 0] - vertices[j, 0])]
+            )
+            unit_normals[j] = normal / np.linalg.norm(normal)
 
     return vertices, unit_normals
-
 
 
 def calculate_distance(points, vertices, unit_normals, return_bool=False):
@@ -125,10 +145,12 @@ def calculate_distance(points, vertices, unit_normals, return_bool=False):
             for j in range(0, nVertices):
 
                 # define the vector from the point of interest to the first point of the face
-                pa = np.array([vertices[j, 0]-points[i, 0], vertices[j, 1]-points[i, 1]])
+                pa = np.array(
+                    [vertices[j, 0] - points[i, 0], vertices[j, 1] - points[i, 1]]
+                )
 
                 # find perpendicular distance from point to current surface (vector projection)
-                d_vec = np.vdot(pa, unit_normals[j])*unit_normals[j]
+                d_vec = np.vdot(pa, unit_normals[j]) * unit_normals[j]
 
                 # calculate the sign of perpendicular distance from point to current face (+ is inside, - is outside)
                 face_distance[i, j] = np.vdot(d_vec, unit_normals[j])
@@ -136,7 +158,7 @@ def calculate_distance(points, vertices, unit_normals, return_bool=False):
         return face_distance
 
     else:
-	# initialize array to hold boolean indicating whether a point is inside the hull or not
+        # initialize array to hold boolean indicating whether a point is inside the hull or not
         inside = np.zeros(nPoints)
 
         # loop through points and find distance to each face
@@ -146,10 +168,12 @@ def calculate_distance(points, vertices, unit_normals, return_bool=False):
             for j in range(0, nVertices):
 
                 # define the vector from the point of interest to the first point of the face
-                pa = np.array([vertices[j, 0]-points[i, 0], vertices[j, 1]-points[i, 1]])
+                pa = np.array(
+                    [vertices[j, 0] - points[i, 0], vertices[j, 1] - points[i, 1]]
+                )
 
                 # find perpendicular distance from point to current surface (vector projection)
-                d_vec = np.vdot(pa, unit_normals[j])*unit_normals[j]
+                d_vec = np.vdot(pa, unit_normals[j]) * unit_normals[j]
 
                 # calculate the sign of perpendicular distance from point to current face (+ is inside, - is outside)
                 face_distance[i, j] = np.vdot(d_vec, unit_normals[j])
@@ -161,20 +185,20 @@ def calculate_distance(points, vertices, unit_normals, return_bool=False):
         return face_distance, inside
 
 
+if __name__ == "__main__":
 
-if __name__=="__main__":
+    turbineX = np.array([1, 1, 0.0])
+    turbineY = np.array([1, 500.0, 1000.0])
+    rotorDiameter = np.array([100.0, 100.0, 100.0])
 
-    # turbineX = np.array([0.,0.,0.])
-    # turbineY = np.array([0.,500.,1000.])
-    # rotorDiameter = np.array([100.,100.,100.])
-    #
-    # print SpacingConstraint(turbineX, turbineY, rotorDiameter,minSpacing=2.)
-    # print circularBoundary(turbineX, turbineY, 10000.)
+    print(SpacingConstraint(turbineX, turbineY, rotorDiameter, minSpacing=2.0))
+    circular_boundary = circularBoundary(turbineX, turbineY, 10000.0)
 
     import matplotlib.pyplot as plt
-    locations = np.loadtxt('layout_amalia.txt')
+
+    locations = np.loadtxt("./code/layout_amalia.txt")
     turbineX = locations[:, 0]
     turbineY = locations[:, 1]
-    plt.plot(turbineX, turbineY, 'o')
-    bounds = arbitraryBoundary(turbineX, turbineY)
+    plt.plot(turbineX, turbineY, "o")
+    bounds = arbitraryBoundary(turbineX, turbineY, circular_boundary)
     plt.show()
